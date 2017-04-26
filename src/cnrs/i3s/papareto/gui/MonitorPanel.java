@@ -28,14 +28,14 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import cnrs.i3s.papareto.Operator;
+import cnrs.i3s.papareto.Population;
+import cnrs.i3s.papareto.PopulationListener;
 import oscilloscup.SwingPlotter;
 import oscilloscup.data.Figure;
 import oscilloscup.data.Point;
 import oscilloscup.data.rendering.figure.ConnectedLineFigureRenderer;
 import oscilloscup.system.Space.MODE;
-import cnrs.i3s.papareto.Operator;
-import cnrs.i3s.papareto.Population;
-import cnrs.i3s.papareto.PopulationListener;
 
 public class MonitorPanel extends JPanel
 {
@@ -114,7 +114,7 @@ public class MonitorPanel extends JPanel
 	{
 	    sizeLabel.setText("size=" + p.getSize());
 	    numberOfGenerationsLabel.setText("number of generations=" + p.getNumberOfGenerations());
-	    bestFitnessLabel.setText("best distance=" + p.get(0).fitness);
+	    bestFitnessLabel.setText("best distance=" + p.getIndividualAt(0).fitness);
 	    updateFitnessPlotter(p);
 	    updateOperatorsPlotter(p);
 	    updatePerfPlotter(p);
@@ -173,7 +173,7 @@ public class MonitorPanel extends JPanel
 
 	private void updateFitnessPlotter(Population<A> p)
 	{
-	    double bestDistance = p.get(0).fitness[0];
+	    double bestDistance = p.getIndividualAt(0).fitness[0];
 
 	    if (bestDistance != Double.MAX_VALUE)
 	    {
@@ -181,7 +181,7 @@ public class MonitorPanel extends JPanel
 		bestFitnessFigure.setName("best fitness=" + bestDistance);
 	    }
 
-	    double worstDistance = p.get(p.getSize() - 1).fitness[0];
+	    double worstDistance = p.getIndividualAt(p.getSize() - 1).fitness[0];
 
 	    if (worstDistance != Double.MAX_VALUE)
 	    {

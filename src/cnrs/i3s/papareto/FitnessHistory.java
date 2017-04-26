@@ -17,31 +17,37 @@
 
 package cnrs.i3s.papareto;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class FitnessHistory
+public class FitnessHistory implements Serializable
 {
-	private final List<double[]> l = new ArrayList();
+	private final List<Fitness> l = new ArrayList<>();
 
-	public void add(double[] d)
+	public int size()
+	{
+		return l.size();
+	}
+
+	public void add(Fitness d)
 	{
 		l.add(d);
 	}
 
-	public double[] getFitnessAtGeneration(int g)
+	public Fitness getFitnessAtGeneration(int g)
 	{
 		return l.get(g);
 	}
 
 	public int getNumberOfGenerationsDuringWhichTheBestFitnessHasNotChanged()
 	{
-		final double[] lastFitness = l.get(l.size() - 1);
+		final Fitness lastFitness = l.get(l.size() - 1);
 
 		for (int generation = l.size() - 2; generation >= 0; --generation)
 		{
-			if ( ! Arrays.equals(l.get(generation), lastFitness))
+			if ( ! l.get(generation).equals(lastFitness))
 			{
 				return l.size() - generation;
 			}
@@ -50,9 +56,24 @@ public class FitnessHistory
 		return l.size();
 	}
 
-	public int size()
+	public int getNumberOfGenerationsDuringWhichTheBestFitnessHasNotChangedMoreThan(
+			double max)
 	{
+		final double lastFitness = l.get(l.size() - 1).combine();
+
+		for (int generation = l.size() - 2; generation >= 0; --generation)
+		{
+			double fitness = l.get(generation).combine();
+			double diff = Math.abs(lastFitness - fitness);
+
+			if (diff > max)
+			{
+				return l.size() - generation;
+			}
+		}
+
 		return l.size();
 	}
+
 
 }

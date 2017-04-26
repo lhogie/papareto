@@ -18,14 +18,15 @@
 package cnrs.i3s.papareto;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Operator implements Serializable
 {
-	public int success = 0, numberOfFailure = 0;
+	public int nbSuccess = 0, nbFailure = 0;
 
 	public double getSuccessRate()
 	{
-		return success / (double) (success + numberOfFailure);
+		return nbSuccess / (double) (nbSuccess + nbFailure);
 	}
 
 	@Override
@@ -37,5 +38,28 @@ public class Operator implements Serializable
 	public String getFriendlyName()
 	{
 		return getClass().getName();
+	}
+	
+	public static <O extends Operator> double[] getUsageProbabilities(List<O> operators)
+	{
+		double[] a = new double[operators.size()];
+
+		for (int i = 0; i < a.length; ++i)
+		{
+			Operator o = operators.get(i);
+
+			// if the operator was never used in the past
+			if (o.nbFailure + o.nbSuccess == 0)
+			{
+				// give it max opportunity by assuming it would have top performance
+				a[i] = 1;
+			}
+			else
+			{
+				a[i] = operators.get(i).getSuccessRate();
+			}
+		}
+
+		return a;
 	}
 }

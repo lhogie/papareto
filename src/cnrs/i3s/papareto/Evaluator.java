@@ -1,8 +1,9 @@
 package cnrs.i3s.papareto;
 
-public abstract class Evaluator<E, R>
+import java.io.Serializable;
+
+public abstract class Evaluator<E, R> implements Serializable
 {
-	public double weight = 1;
-	
-	public abstract double evaluate(E i, Population<E, R> p);
+	public abstract FitnessElement evaluate(E i, Population<E, R> p);
+
 }

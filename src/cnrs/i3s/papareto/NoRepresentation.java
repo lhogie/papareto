@@ -1,20 +1,16 @@
-package cnrs.i3s.papareto.impl.pojo;
-
-import cnrs.i3s.papareto.Representation;
+package cnrs.i3s.papareto;
 
 public class NoRepresentation<E> extends Representation<E, E>
 {
-
 	@Override
-	public E toObject(E i)
+	public E toObject(E representation)
 	{
-		return i;
+		return representation;
 	}
 
 	@Override
-	public E fromObject(E i)
+	public E fromObject(E object)
 	{
-		return i;
+		return object;
 	}
-
 }

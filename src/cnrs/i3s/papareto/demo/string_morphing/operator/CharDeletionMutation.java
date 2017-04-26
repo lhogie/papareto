@@ -15,7 +15,7 @@
  *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
  */
 
-package cnrs.i3s.papareto.demo.string;
+package cnrs.i3s.papareto.demo.string_morphing.operator;
 
 import java.util.Random;
 

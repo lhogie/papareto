@@ -21,7 +21,7 @@ import java.util.Random;
 
 public abstract class MutationOperator<R> extends Operator
 {
-	private double probability = 1;
+	private double occurenceProbability = 1;
 	private int numberOfChanges = 1;
 
 	public void mutate(R e, Random r)
@@ -32,16 +32,16 @@ public abstract class MutationOperator<R> extends Operator
 		}
 	}
 
-	protected abstract void performOneSingleChange(R g, Random r);
+	protected abstract void performOneSingleChange(R individual, Random prng);
 
 	public double getProbability()
 	{
-		return probability;
+		return occurenceProbability;
 	}
 
-	public void setProbability(double applicationProbability)
+	public void setProbability(double occurenceProbability)
 	{
-		this.probability = applicationProbability;
+		this.occurenceProbability = occurenceProbability;
 	}
 
 	public int getNumberOfChanges()

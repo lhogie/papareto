@@ -18,7 +18,6 @@
 package cnrs.i3s.papareto;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,12 +31,12 @@ import java.util.List;
 public class Individual<E> implements Serializable
 {
 	public final E object;
-	public final double[] fitness;
+	public final Fitness fitness;
 
 	// the operators used to created this individual
 	public final List<Operator> operators;
 
-	public Individual(E o, double[] fitness, List<Operator> operators)
+	public Individual(E o, Fitness fitness, List<Operator> operators)
 	{
 		if (o.getClass() == String.class)
 			throw new IllegalArgumentException("does not support String objects");
@@ -51,12 +50,17 @@ public class Individual<E> implements Serializable
 	@Override
 	public String toString()
 	{
-		return "['" + object + "', f=" + Arrays.toString(fitness) + "]";
+		return "['" + object + "', f=" + fitness + "]";
 	}
 
 	@Override
 	public boolean equals(Object i)
 	{
 		return i instanceof Individual && ((Individual) i).object.equals(object);
+	}
+
+	public Fitness getFitness()
+	{
+		return fitness;
 	}
 }

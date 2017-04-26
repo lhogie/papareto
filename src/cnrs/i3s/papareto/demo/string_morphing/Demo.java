@@ -15,51 +15,83 @@
  *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
  */
 
-package cnrs.i3s.papareto.demo.string;
+package cnrs.i3s.papareto.demo.string_morphing;
 
-import cnrs.i3s.papareto.impl.pojo.POJOEvaluator;
-import cnrs.i3s.papareto.impl.pojo.POJOPopulation;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+import cnrs.i3s.papareto.Evaluator;
+import cnrs.i3s.papareto.FitnessElement;
+import cnrs.i3s.papareto.NoRepresentation;
+import cnrs.i3s.papareto.Population;
+import cnrs.i3s.papareto.demo.string_morphing.operator.CharAdditionMutation;
+import cnrs.i3s.papareto.demo.string_morphing.operator.CharAlterationMutation;
+import cnrs.i3s.papareto.demo.string_morphing.operator.CharDeletionMutation;
+import cnrs.i3s.papareto.demo.string_morphing.operator.HalfHalfCrossover;
+import cnrs.i3s.papareto.demo.string_morphing.operator.PrefixSuffixCrossover;
+import toools.io.file.RegularFile;
 import toools.text.TextUtilities;
 
-public class Demo2
+public class Demo
 {
 	public static void main(String[] args)
+			throws FileNotFoundException, IOException, ClassNotFoundException
 	{
-		final String target = "Hello how are you doing?";
-		StringBuilder initialInidividual = new StringBuilder("Salut ca va?");
+		StringBuilder source = new StringBuilder("Salut ca va?");
+		String target = "Hello how are you doing?";
 
-		POJOPopulation<StringBuilder> p = new POJOPopulation<StringBuilder>();
-		p.add(initialInidividual);
+		RegularFile f = new RegularFile("$HOME/population.serialized");
 
-		p.getEvaluators().add(new POJOEvaluator<StringBuilder>()
+		Population<StringBuilder, StringBuilder> population;
+
+		if (f.exists())
+		{
+			population = Population.restore(f);
+		}
+		else
+		{
+			population = create(source, target);
+		}
+
+		System.out.println(population);
+
+		// while the target string has not been reached
+		while (population.getBestIndividual().getFitness().combine() < 0)
+		{
+			population.makeNewGeneration(100);
+
+			System.out.println(population + "\t" + population.getBestIndividual());
+
+			if (Math.random() < 0.2)
+				population.checkpoint(f);
+		}
+	}
+
+	private static Population<StringBuilder, StringBuilder> create(StringBuilder src,
+			String target)
+	{
+		Population<StringBuilder, StringBuilder> population = new Population<StringBuilder, StringBuilder>();
+
+		population.getEvaluators().add(new Evaluator<StringBuilder, StringBuilder>()
 		{
 
 			@Override
-			public double evaluate(StringBuilder i, POJOPopulation<StringBuilder> p)
+			public FitnessElement evaluate(StringBuilder i,
+					Population<StringBuilder, StringBuilder> p)
 			{
-				return - TextUtilities.computeLevenshteinDistance(i.toString(), target);
+				int d = TextUtilities.computeLevenshteinDistance(i.toString(), target);
+
+				return new FitnessElement( - d, 1);
 			}
 		});
 
-		p.getRepresentation().getCrossoverOperators().add(new PrefixSuffixCrossover());
-		p.getRepresentation().getCrossoverOperators().add(new HalfHalfCrossover());
-		p.getRepresentation().getMutationOperators().add(new CharAdditionMutation());
-		p.getRepresentation().getMutationOperators().add(new CharAlterationMutation());
-		p.getRepresentation().getMutationOperators().add(new CharDeletionMutation());
-
-		while (true)
-		{
-			if (p.makeNewGeneration(100))
-			{
-				System.out.println(
-						"Generation: " + p.getNumberOfGenerations() + ": " + p.get(0));
-
-				if (p.get(0).fitness[0] == 0)
-				{
-					break;
-				}
-			}
-		}
-
+		population.setRepresentation(new NoRepresentation<StringBuilder>());
+		population.getCrossoverOperators().add(new PrefixSuffixCrossover());
+		population.getCrossoverOperators().add(new HalfHalfCrossover());
+		population.getMutationOperators().add(new CharAdditionMutation());
+		population.getMutationOperators().add(new CharAlterationMutation());
+		population.getMutationOperators().add(new CharDeletionMutation());
+		population.add(src);
+		return population;
 	}
 }

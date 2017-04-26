@@ -1,25 +1,10 @@
 package cnrs.i3s.papareto;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.Serializable;
 
-public abstract class Representation<E, R>
+public abstract class Representation<E, R> implements Serializable
 {
-	private final List<MutationOperator<R>> mutationOperators = new ArrayList<>();
-	private final List<CrossoverOperator<R>> crossoverOperators = new ArrayList<>();
-
-	public List<MutationOperator<R>> getMutationOperators()
-	{
-		return mutationOperators;
-	}
-
-	public List<CrossoverOperator<R>> getCrossoverOperators()
-	{
-		return crossoverOperators;
-	}
-
 	public abstract E toObject(R r);
 
 	public abstract R fromObject(E e);
-
 }
