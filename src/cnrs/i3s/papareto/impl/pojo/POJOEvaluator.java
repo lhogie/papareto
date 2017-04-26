@@ -15,24 +15,19 @@
  *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
  */
 
-package cnrs.i3s.papareto;
+package cnrs.i3s.papareto.impl.pojo;
 
-import java.util.Random;
+import cnrs.i3s.papareto.Evaluator;
+import cnrs.i3s.papareto.Population;
 
-public abstract class BestCrossover<E extends Cloneable> extends CrossoverOperator<E>
+public abstract class POJOEvaluator<E> extends Evaluator<E, E>
 {
-    @Override
-    public String getFriendlyName()
-    {
-	return "elitist crossover";
-    }
 
-    @Override
-    public E crossover(Individual<E> i1, Individual<E> i2, Population<E> p, Random r)
-    {
-	Individual<E> best = p.compareObjectiveValues(i1.fitness, i2.fitness) > 0 ? i1 : i2;
-	return clone(best.object);
-    }
+	@Override
+	final public double evaluate(E i, Population<E, E> p)
+	{
+		return evaluate(i, (POJOPopulation<E>) p);
+	}
 
-    protected abstract E clone(E o);
+	public abstract double evaluate(E i, POJOPopulation<E> p);
 }

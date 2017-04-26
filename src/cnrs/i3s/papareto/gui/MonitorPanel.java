@@ -168,7 +168,7 @@ public class MonitorPanel extends JPanel
 	    }
 
 	    operatorFigure.addPoint(new Point(p.getNumberOfGenerations(), (int) 1000 * o.getSuccessRate()));
-	    operatorFigure.retainOnlyLastPoints(100);
+	    operatorFigure.retainsOnlyLastPoints(100);
 	}
 
 	private void updateFitnessPlotter(Population<A> p)

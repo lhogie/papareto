@@ -17,8 +17,8 @@
 
 package cnrs.i3s.papareto;
 
-public interface PopulationListener<E>
+public interface PopulationListener<E, R>
 {
-    void newIteration(Population<E> p, boolean improve);
-    void completed(Population<E> p);
+    void newIteration(Population<E, R> p, boolean improve);
+    void completed(Population<E, R> p);
 }

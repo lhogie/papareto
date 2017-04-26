@@ -23,18 +23,18 @@ import cnrs.i3s.papareto.CrossoverOperator;
 import cnrs.i3s.papareto.Individual;
 import cnrs.i3s.papareto.Population;
 
-
 public class Crossover extends CrossoverOperator<ValueHolder>
 {
 
-    @Override
-    public ValueHolder crossover(Individual<ValueHolder> i1, Individual<ValueHolder> i2, Population<ValueHolder> p, Random r)
-    {
-	double diff = Math.abs(i1.object.value - i2.object.value);
-	double min = Math.abs(i1.object.value - i2.object.value);
-	
-	// go somewhere in between
-	return new ValueHolder(min + diff * r.nextDouble());
-    }
+	@Override
+	public ValueHolder crossover(Individual<ValueHolder> i1, Individual<ValueHolder> i2,
+			Population<ValueHolder> p, Random r)
+	{
+		double diff = Math.abs(i1.object.value - i2.object.value);
+		double min = Math.abs(i1.object.value - i2.object.value);
+
+		// go somewhere in between
+		return new ValueHolder(min + diff * r.nextDouble());
+	}
 
 }

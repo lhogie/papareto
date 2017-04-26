@@ -20,31 +20,28 @@ package cnrs.i3s.papareto.demo.string;
 import java.util.Random;
 
 import cnrs.i3s.papareto.CrossoverOperator;
-import cnrs.i3s.papareto.Individual;
-import cnrs.i3s.papareto.Population;
-
 
 public class HalfHalfCrossover extends CrossoverOperator<StringBuilder>
 {
 
-    @Override
-    public StringBuilder crossover(Individual<StringBuilder> a, Individual<StringBuilder> b, Population<StringBuilder> p, Random r)
-    {
-	if (r.nextDouble() < 0.5)
+	@Override
+	public StringBuilder crossover(StringBuilder a, StringBuilder b, Random r)
 	{
-	    Individual<StringBuilder> tmp = a;
-	    a = b;
-	    b = tmp;
+		if (r.nextDouble() < 0.5)
+		{
+			StringBuilder tmp = a;
+			a = b;
+			b = tmp;
+		}
+
+		String prefix = a.substring(0, a.length() / 2);
+		String suffix = b.substring(b.length() / 2);
+		return new StringBuilder(prefix + suffix);
 	}
 
-	String prefix = a.object.substring(0, a.object.length() / 2);
-	String suffix = b.object.substring(b.object.length() / 2);
-	return new StringBuilder(prefix + suffix);
-    }
-
-    @Override
-    public String getFriendlyName()
-    {
-	return "middle crossover";
-    }
+	@Override
+	public String getFriendlyName()
+	{
+		return "middle crossover";
+	}
 }

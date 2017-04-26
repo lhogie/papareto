@@ -17,50 +17,112 @@
 
 package cnrs.i3s.papareto.demo.string;
 
+import cnrs.i3s.papareto.Evaluator;
 import cnrs.i3s.papareto.Population;
+import cnrs.i3s.papareto.PopulationListener;
+import cnrs.i3s.papareto.TerminationCondition;
+import cnrs.i3s.papareto.impl.pojo.POJOPopulation;
 
 public class Demo
 {
-    public static void main(String[] args)
-    {
-	StringBuilder initialInidividual = new StringBuilder("Salut ca va?");
-
-	Population<StringBuilder> p = new Population<StringBuilder>(initialInidividual) {
-
-	    protected double computeFitness1(StringBuilder i)
-	    {
-		return -Math.abs(10 - i.length());
-	    }
-
-	    protected double computeFitness2(StringBuilder i)
-	    {
-		return -Math.abs(5 - i.toString().split(" ").length);
-	    }
-
-	    protected double computeFitness3(StringBuilder i)
-	    {
-		return -i.indexOf("  ");
-	    }
-	};
-
-	p.getCrossoverOperators().add(new PrefixSuffixCrossover());
-	p.getCrossoverOperators().add(new HalfHalfCrossover());
-	p.getMutationOperators().add(new CharAdditionMutation());
-	p.getMutationOperators().add(new CharAlterationMutation());
-	p.getMutationOperators().add(new CharDeletionMutation());
-
-	while (true)
+	public static void main(String[] args)
 	{
-	    if (p.makeNewGeneration(100))
-	    {
-		System.out.println("Generation: " + p.getNumberOfGenerations() + ": " + p.get(0));
+		StringBuilder initialIndividual = new StringBuilder("Salut ca va?");
 
-		if (p.get(0).fitness[0] == 0)
+		POJOPopulation<StringBuilder> p = new POJOPopulation<StringBuilder>()
 		{
-		    break;
-		}
-	    }
-	}
+			public boolean saveToDisk(int g)
+			{
+				return false;
+			}
+		};
 
-    }
+		p.getEvaluators().add(new Evaluator<StringBuilder, StringBuilder>()
+		{
+			@Override
+			public double evaluate(StringBuilder i,
+					Population<StringBuilder, StringBuilder> p)
+			{
+				return - Math.abs(10 - i.length());
+			}
+		});
+
+		p.getEvaluators().add(new Evaluator<StringBuilder, StringBuilder>()
+		{
+			@Override
+			public double evaluate(StringBuilder i,
+					Population<StringBuilder, StringBuilder> p)
+			{
+				return - Math.abs(5 - i.toString().split(" ").length);
+			}
+		});
+
+		p.getEvaluators().add(new Evaluator<StringBuilder, StringBuilder>()
+		{
+			@Override
+			public double evaluate(StringBuilder i,
+					Population<StringBuilder, StringBuilder> p)
+			{
+				return - i.indexOf("  ");
+			}
+		});
+
+		p.add(initialIndividual);
+
+		p.getRepresentation().getCrossoverOperators().add(new PrefixSuffixCrossover());
+		p.getRepresentation().getCrossoverOperators().add(new HalfHalfCrossover());
+		p.getRepresentation().getMutationOperators().add(new CharAdditionMutation());
+		p.getRepresentation().getMutationOperators().add(new CharAlterationMutation());
+		p.getRepresentation().getMutationOperators().add(new CharDeletionMutation());
+
+		while (true)
+		{
+			if (p.makeNewGeneration(100))
+			{
+				System.out.println(
+						"Generation: " + p.getNumberOfGenerations() + ": " + p.get(0));
+
+				if (p.get(0).fitness[0] == 0)
+				{
+					break;
+				}
+			}
+		}
+
+		
+		p.getIndividualList().clear();
+		p.add(initialIndividual);
+
+		
+		System.out.println("once again");
+		p.getPopulationListeners()
+				.add(new PopulationListener<StringBuilder, StringBuilder>()
+				{
+
+					@Override
+					public void newIteration(Population<StringBuilder, StringBuilder> p,
+							boolean improve)
+					{
+						System.out.println("Generation: " + p.getNumberOfGenerations()
+								+ ": " + p.get(0));
+					}
+
+					@Override
+					public void completed(Population<StringBuilder, StringBuilder> p)
+					{
+						System.out.println("done");
+					}
+				});
+
+		p.evolve(new TerminationCondition<StringBuilder, StringBuilder>()
+		{
+
+			@Override
+			public boolean completed(Population<StringBuilder, StringBuilder> p)
+			{
+				return p.get(0).fitness[0] == 0;
+			}
+		});
+
+	}
 }

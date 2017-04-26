@@ -20,39 +20,33 @@ package cnrs.i3s.papareto.demo.string;
 import java.util.Random;
 
 import cnrs.i3s.papareto.CrossoverOperator;
-import cnrs.i3s.papareto.Individual;
-import cnrs.i3s.papareto.Population;
-
 
 public class PrefixSuffixCrossover extends CrossoverOperator<StringBuilder>
 {
 
-    @Override
-    public StringBuilder crossover(Individual<StringBuilder> a, Individual<StringBuilder> b, Population<StringBuilder> p, Random r)
-    {
-	if (r.nextDouble() < 0.5)
+	@Override
+	public StringBuilder crossover(StringBuilder a, StringBuilder b, Random r)
 	{
-	    Individual<StringBuilder> tmp = a;
-	    a = b;
-	    b = tmp;
+		if (r.nextDouble() < 0.5)
+		{
+			StringBuilder tmp = a;
+			a = b;
+			b = tmp;
+		}
+
+		// take a prefix from a
+		String aPrefix = a.length() > 0 ? a.substring(0, r.nextInt(a.length())) : "";
+
+		// take a suffix from b
+		String bSuffix = b.length() > 0 ? b.substring(r.nextInt(b.length())) : "";
+
+		// append them
+		return new StringBuilder(aPrefix + bSuffix);
 	}
 
-	StringBuilder s1 = a.object;
-	StringBuilder s2 = b.object;
-	
-	// take a prefix from a
-	String aPrefix = s1.length() > 0 ? s1.substring(0, r.nextInt(s1.length())) : "";
-	
-	// take a suffix from b
-	String bSuffix = s2.length() > 0 ? s2.substring(r.nextInt(s2.length())) : "";
-	
-	// append them
-	return new StringBuilder(aPrefix + bSuffix);
-    }
-
-    @Override
-    public String getFriendlyName()
-    {
-	return "random crossover";
-    }
+	@Override
+	public String getFriendlyName()
+	{
+		return "random crossover";
+	}
 }

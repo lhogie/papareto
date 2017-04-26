@@ -19,7 +19,7 @@ package cnrs.i3s.papareto;
 
 import java.util.Random;
 
-public abstract class CrossoverOperator<E> extends Operator
+public abstract class CrossoverOperator<R> extends Operator
 {
-    public abstract E crossover(Individual<E> i1, Individual<E> i2, Population<E> p, Random r);
+	public abstract R crossover(R i1, R i2, Random r);
 }

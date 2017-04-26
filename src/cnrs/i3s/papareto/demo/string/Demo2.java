@@ -17,42 +17,49 @@
 
 package cnrs.i3s.papareto.demo.string;
 
+import cnrs.i3s.papareto.impl.pojo.POJOEvaluator;
+import cnrs.i3s.papareto.impl.pojo.POJOPopulation;
 import toools.text.TextUtilities;
-import cnrs.i3s.papareto.Population;
 
 public class Demo2
 {
-    public static void main(String[] args)
-    {
-	final String target = "Hello how are you doing?";
-	StringBuilder initialInidividual = new StringBuilder("Salut ca va?");
-
-	Population<StringBuilder> p = new Population<StringBuilder>(initialInidividual) {
-
-	    double computeFitness(StringBuilder i)
-	    {
-		return -TextUtilities.computeLevenshteinDistance(i.toString(), target);
-	    }
-	};
-
-	p.getCrossoverOperators().add(new PrefixSuffixCrossover());
-	p.getCrossoverOperators().add(new HalfHalfCrossover());
-	p.getMutationOperators().add(new CharAdditionMutation());
-	p.getMutationOperators().add(new CharAlterationMutation());
-	p.getMutationOperators().add(new CharDeletionMutation());
-
-	while (true)
+	public static void main(String[] args)
 	{
-	    if (p.makeNewGeneration(100))
-	    {
-		System.out.println("Generation: " + p.getNumberOfGenerations() + ": " + p.get(0));
+		final String target = "Hello how are you doing?";
+		StringBuilder initialInidividual = new StringBuilder("Salut ca va?");
 
-		if (p.get(0).fitness[0] == 0)
+		POJOPopulation<StringBuilder> p = new POJOPopulation<StringBuilder>();
+		p.add(initialInidividual);
+
+		p.getEvaluators().add(new POJOEvaluator<StringBuilder>()
 		{
-		    break;
-		}
-	    }
-	}
 
-    }
+			@Override
+			public double evaluate(StringBuilder i, POJOPopulation<StringBuilder> p)
+			{
+				return - TextUtilities.computeLevenshteinDistance(i.toString(), target);
+			}
+		});
+
+		p.getRepresentation().getCrossoverOperators().add(new PrefixSuffixCrossover());
+		p.getRepresentation().getCrossoverOperators().add(new HalfHalfCrossover());
+		p.getRepresentation().getMutationOperators().add(new CharAdditionMutation());
+		p.getRepresentation().getMutationOperators().add(new CharAlterationMutation());
+		p.getRepresentation().getMutationOperators().add(new CharDeletionMutation());
+
+		while (true)
+		{
+			if (p.makeNewGeneration(100))
+			{
+				System.out.println(
+						"Generation: " + p.getNumberOfGenerations() + ": " + p.get(0));
+
+				if (p.get(0).fitness[0] == 0)
+				{
+					break;
+				}
+			}
+		}
+
+	}
 }

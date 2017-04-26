@@ -19,25 +19,24 @@ package cnrs.i3s.papareto.demo.string;
 
 import java.util.Random;
 
-import toools.text.TextUtilities;
 import cnrs.i3s.papareto.MutationOperator;
-import cnrs.i3s.papareto.Population;
-
+import toools.text.TextUtilities;
 
 public class CharAlterationMutation extends MutationOperator<StringBuilder>
 {
-    @Override
-    public void performOneSingleChange(StringBuilder s, Population<StringBuilder> p, Random r)
-    {
-	if (s.length() > 0)
+	@Override
+	public void performOneSingleChange(StringBuilder s, Random r)
 	{
-	    int randomPosition = r.nextInt(s.length());
-	    s.setCharAt(randomPosition, TextUtilities.pickUpOneRandomChar(r));
+		if (s.length() > 0)
+		{
+			int randomPosition = r.nextInt(s.length());
+			s.setCharAt(randomPosition, TextUtilities.pickUpOneRandomChar(r));
+		}
 	}
-    }
-    @Override
-    public String getFriendlyName()
-    {
-	return "char change";
-    }
+
+	@Override
+	public String getFriendlyName()
+	{
+		return "char change";
+	}
 }

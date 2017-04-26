@@ -17,26 +17,26 @@
 
 package cnrs.i3s.papareto.demo.sx2;
 
-public class ValueHolder
+import java.io.Serializable;
+
+public class ValueHolder implements Serializable
 {
-    public double value;
+	public double value;
 
-    
-    public ValueHolder(double d)
-    {
-	this.value = d;
-    }
+	public ValueHolder(double d)
+	{
+		this.value = d;
+	}
 
+	@Override
+	public boolean equals(Object obj)
+	{
+		return ((ValueHolder) obj).value == value;
+	}
 
-    @Override
-    public boolean equals(Object obj)
-    {
-	return ((ValueHolder) obj).value == value;
-    }
-
-    @Override
-    public String toString()
-    {
-	return String.valueOf(value);
-    }
+	@Override
+	public String toString()
+	{
+		return String.valueOf(value);
+	}
 }

@@ -17,7 +17,7 @@
 
 package cnrs.i3s.papareto;
 
-public interface TerminationCondition<E>
+public interface TerminationCondition<E, R>
 {
-    boolean completed(Population<E> p);
+	boolean completed(Population<E, R> p);
 }

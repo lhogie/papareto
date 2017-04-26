@@ -19,42 +19,42 @@ package cnrs.i3s.papareto;
 
 import java.util.Random;
 
-public abstract class MutationOperator<E> extends Operator
+public abstract class MutationOperator<R> extends Operator
 {
-    private double probability = 1;
-    private int numberOfChanges = 1;
+	private double probability = 1;
+	private int numberOfChanges = 1;
 
-    public void mutate(E e, Population<E> p, Random r)
-    {
-	for (int i = 0; i < numberOfChanges; ++i)
+	public void mutate(R e, Random r)
 	{
-	    performOneSingleChange(e, p, r);
+		for (int i = 0; i < numberOfChanges; ++i)
+		{
+			performOneSingleChange(e, r);
+		}
 	}
-    }
 
-    protected abstract void performOneSingleChange(E g, Population<E> p, Random r);
+	protected abstract void performOneSingleChange(R g, Random r);
 
-    public double getProbability()
-    {
-	return probability;
-    }
+	public double getProbability()
+	{
+		return probability;
+	}
 
-    public void setProbability(double applicationProbability)
-    {
-	this.probability = applicationProbability;
-    }
+	public void setProbability(double applicationProbability)
+	{
+		this.probability = applicationProbability;
+	}
 
-    public int getNumberOfChanges()
-    {
-	return numberOfChanges;
-    }
+	public int getNumberOfChanges()
+	{
+		return numberOfChanges;
+	}
 
-    public void setNumberOfChanges(int numberOfChanges)
-    {
-	if (numberOfChanges < 0)
-	    throw new IllegalArgumentException("numberOfOccurences must be >= 0");
+	public void setNumberOfChanges(int numberOfChanges)
+	{
+		if (numberOfChanges < 0)
+			throw new IllegalArgumentException("numberOfOccurences must be >= 0");
 
-	this.numberOfChanges = numberOfChanges;
-    }
+		this.numberOfChanges = numberOfChanges;
+	}
 
 }

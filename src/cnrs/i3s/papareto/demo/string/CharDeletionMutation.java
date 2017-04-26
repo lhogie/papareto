@@ -20,23 +20,22 @@ package cnrs.i3s.papareto.demo.string;
 import java.util.Random;
 
 import cnrs.i3s.papareto.MutationOperator;
-import cnrs.i3s.papareto.Population;
 
 public class CharDeletionMutation extends MutationOperator<StringBuilder>
 {
-    @Override
-    public void performOneSingleChange(StringBuilder s, Population<StringBuilder> p, Random r)
-    {
-	if (s.length() > 0)
+	@Override
+	public void performOneSingleChange(StringBuilder s, Random r)
 	{
-	    int i = r.nextInt(s.length());
-	    s.deleteCharAt(i);
+		if (s.length() > 0)
+		{
+			int i = r.nextInt(s.length());
+			s.deleteCharAt(i);
+		}
 	}
-    }
 
-    @Override
-    public String getFriendlyName()
-    {
-	return "char deletion";
-    }
+	@Override
+	public String getFriendlyName()
+	{
+		return "char deletion";
+	}
 }

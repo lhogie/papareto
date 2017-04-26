@@ -17,6 +17,7 @@
 
 package cnrs.i3s.papareto;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,42 +29,34 @@ import java.util.List;
  * 
  * @param <E>
  */
-public class Individual<E>
+public class Individual<E> implements Serializable
 {
-    public final E object;
-    public final double[] fitness;
-    
-    // the operators used to created this individual
-    public final List<Operator> operators;
-  
-    public Individual(E o, double[] fitness, List<Operator> operators)
-    {
-	if (o.getClass() == String.class)
-	    throw new IllegalArgumentException("does not support immutable objects");
+	public final E object;
+	public final double[] fitness;
 
-	this.object = o;
-	this.fitness = fitness;
-	this.operators = operators;
+	// the operators used to created this individual
+	public final List<Operator> operators;
 
-    }
-
-    @Override
-    public String toString()
-    {
-	return "['" + object + "', f=" + Arrays.toString(fitness) + "]";
-    }
-
-    @Override
-    public boolean equals(Object i)
-    {
-	if (i == null)
+	public Individual(E o, double[] fitness, List<Operator> operators)
 	{
-	    return false;
+		if (o.getClass() == String.class)
+			throw new IllegalArgumentException("does not support String objects");
+
+		this.object = o;
+		this.fitness = fitness;
+		this.operators = operators;
+
 	}
-	else
+
+	@Override
+	public String toString()
 	{
-	    Object o = ((Individual<E>) i).object;
-	    return o.equals(object);
+		return "['" + object + "', f=" + Arrays.toString(fitness) + "]";
 	}
-    }
+
+	@Override
+	public boolean equals(Object i)
+	{
+		return i instanceof Individual && ((Individual) i).object.equals(object);
+	}
 }

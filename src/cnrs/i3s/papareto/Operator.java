@@ -17,23 +17,25 @@
 
 package cnrs.i3s.papareto;
 
-public class Operator
+import java.io.Serializable;
+
+public class Operator implements Serializable
 {
-    public int success = 0, numberOfFailure = 0;
+	public int success = 0, numberOfFailure = 0;
 
-    public double getSuccessRate()
-    {
-	return success / (double) (success + numberOfFailure);
-    }
+	public double getSuccessRate()
+	{
+		return success / (double) (success + numberOfFailure);
+	}
 
-    @Override
-    public String toString()
-    {
-	return getClass().getName() + " succes rate=" + getSuccessRate();
-    }
+	@Override
+	public String toString()
+	{
+		return getClass().getName() + " succes rate=" + getSuccessRate();
+	}
 
-    public String getFriendlyName()
-    {
-	return getClass().getName();
-    }
+	public String getFriendlyName()
+	{
+		return getClass().getName();
+	}
 }
