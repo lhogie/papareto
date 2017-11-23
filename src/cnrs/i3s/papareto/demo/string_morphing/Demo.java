@@ -1,97 +1,90 @@
-/**
- *  This file is part of Papareto.
- *	
- *  Papareto is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Papareto is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
- */
+/* (C) Copyright 2009-2013 CNRS (Centre National de la Recherche Scientifique).
+
+Licensed to the CNRS under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The CNRS licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+*/
+
+/* Contributors:
+
+Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
+
+*/
 
 package cnrs.i3s.papareto.demo.string_morphing;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Random;
 
 import cnrs.i3s.papareto.Evaluator;
-import cnrs.i3s.papareto.FitnessElement;
 import cnrs.i3s.papareto.NoRepresentation;
 import cnrs.i3s.papareto.Population;
-import cnrs.i3s.papareto.demo.string_morphing.operator.CharAdditionMutation;
-import cnrs.i3s.papareto.demo.string_morphing.operator.CharAlterationMutation;
-import cnrs.i3s.papareto.demo.string_morphing.operator.CharDeletionMutation;
-import cnrs.i3s.papareto.demo.string_morphing.operator.HalfHalfCrossover;
-import cnrs.i3s.papareto.demo.string_morphing.operator.PrefixSuffixCrossover;
-import toools.io.file.RegularFile;
+import cnrs.i3s.papareto.Representation;
+import cnrs.i3s.papareto.algo.BasicEvolver;
+import cnrs.i3s.papareto.operator.string.CharAdditionMutation;
+import cnrs.i3s.papareto.operator.string.CharAlterationMutation;
+import cnrs.i3s.papareto.operator.string.CharDeletionMutation;
+import cnrs.i3s.papareto.operator.string.HalfHalfCrossover;
+import cnrs.i3s.papareto.operator.string.PrefixSuffixCrossover;
+import cnrs.i3s.papareto.operator.string.RandomStringGenerator;
 import toools.text.TextUtilities;
 
 public class Demo
 {
+
 	public static void main(String[] args)
 			throws FileNotFoundException, IOException, ClassNotFoundException
 	{
-		StringBuilder source = new StringBuilder("Salut ca va?");
-		String target = "Hello how are you doing?";
+		Random random = new Random(5);
+		Population<StringBuilder, StringBuilder> population = new Population<>();
 
-		RegularFile f = new RegularFile("$HOME/population.serialized");
-
-		Population<StringBuilder, StringBuilder> population;
-
-		if (f.exists())
-		{
-			population = Population.restore(f);
-		}
-		else
-		{
-			population = create(source, target);
-		}
-
-		System.out.println(population);
-
-		// while the target string has not been reached
-		while (population.getBestIndividual().getFitness().combine() < 0)
-		{
-			population.makeNewGeneration(100);
-
-			System.out.println(population + "\t" + population.getBestIndividual());
-
-			if (Math.random() < 0.2)
-				population.checkpoint(f);
-		}
-	}
-
-	private static Population<StringBuilder, StringBuilder> create(StringBuilder src,
-			String target)
-	{
-		Population<StringBuilder, StringBuilder> population = new Population<StringBuilder, StringBuilder>();
+		Representation<StringBuilder, StringBuilder> r = new NoRepresentation<StringBuilder>();
+		r.getRandomIndividualGenerators().add(new RandomStringGenerator());
+		r.getCrossoverOperators().add(new HalfHalfCrossover());
+		r.getCrossoverOperators().add(new PrefixSuffixCrossover());
+		r.getMutationOperators().add(new CharAdditionMutation());
+		r.getMutationOperators().add(new CharDeletionMutation());
+		r.getMutationOperators().add(new CharAlterationMutation());
+		population.setRepresentation(r);
 
 		population.getEvaluators().add(new Evaluator<StringBuilder, StringBuilder>()
 		{
-
 			@Override
-			public FitnessElement evaluate(StringBuilder i,
+			public double evaluate(StringBuilder s,
 					Population<StringBuilder, StringBuilder> p)
 			{
-				int d = TextUtilities.computeLevenshteinDistance(i.toString(), target);
-
-				return new FitnessElement( - d, 1);
+				return - TextUtilities.computeLevenshteinDistance(s.toString(),
+						"Hello! How are you doing?");
 			}
 		});
 
-		population.setRepresentation(new NoRepresentation<StringBuilder>());
-		population.getCrossoverOperators().add(new PrefixSuffixCrossover());
-		population.getCrossoverOperators().add(new HalfHalfCrossover());
-		population.getMutationOperators().add(new CharAdditionMutation());
-		population.getMutationOperators().add(new CharAlterationMutation());
-		population.getMutationOperators().add(new CharDeletionMutation());
-		population.add(src);
-		return population;
+		// population.setEvolver(new RandomEvolver<>());
+		population.setEvolver(new BasicEvolver<>());
+		// population.setEvolver(new LucEvolver<>());
+
+		population.fillRandomly(50, random);
+
+		// while the target string has not been reached
+		while (population.getBestIndividual().getFitness().getCombinedFitnessValue() < 0)
+		{
+			population.iterate(random);
+			System.out.println(population + "\t" + population.getBestIndividual());
+		}
 	}
+
 }

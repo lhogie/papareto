@@ -27,20 +27,52 @@ Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis)
 
 package cnrs.i3s.papareto;
 
-import java.io.Serializable;
+import java.util.Arrays;
 
-public class Operator implements Serializable
+public class LinearCombination implements Combiner
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	public final double[] weights;
 
-	public  double getSuccessRate()
+	public LinearCombination()
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		// no weight, so they are assumed to be always 1
+		weights = null;
 	}
 
-	public  String getFriendlyName()
+	public LinearCombination(int nbElements)
 	{
-		return getClass().getName();
+		weights = new double[nbElements];
+		Arrays.fill(weights, 1);
 	}
 
+	public LinearCombination(double... weigths)
+	{
+		this.weights = Arrays.copyOf(weigths, weigths.length);
+	}
+
+	@Override
+	public double combine(double[] a)
+	{
+		double r = 0;
+
+		if (weights == null)
+		{
+			for (int i = 0; i < a.length; ++i)
+			{
+				r += a[i];
+			}
+		}
+		else
+		{
+			if (weights.length != a.length)
+				throw new IllegalStateException();
+
+			for (int i = 0; i < a.length; ++i)
+			{
+				r += a[i] * weights[i];
+			}
+		}
+
+		return r;
+	}
 }

@@ -24,23 +24,29 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.demo.function;
 
-package cnrs.i3s.papareto;
+import java.util.Arrays;
 
-import java.io.Serializable;
-
-public class Operator implements Serializable
+public class Point
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	public double[] v;
 
-	public  double getSuccessRate()
+	public Point(int dimension)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.v = new double[dimension];
 	}
 
-	public  String getFriendlyName()
+	public Point(double... values)
 	{
-		return getClass().getName();
+		this.v = Arrays.copyOf(values, values.length);
 	}
 
+	@Override
+	public String toString()
+	{
+		return "(" + Arrays.toString(v) + ")";
+	}
 }

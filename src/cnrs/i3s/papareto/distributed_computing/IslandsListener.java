@@ -24,23 +24,21 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.distributed_computing;
 
-package cnrs.i3s.papareto;
+import java.util.List;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.Individual;
+import cnrs.i3s.papareto.Population;
+import octojus.OctojusNode;
 
-public class Operator implements Serializable
+public interface IslandsListener<E, R>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	void sendingPopulations(Population<E, R> subPopulation, OctojusNode targetNode);
 
-	public  double getSuccessRate()
-	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
-	}
+	void receivingIndividuals(OctojusNode senderNode, List<Individual<E>> individuals);
 
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
-	}
-
+	void terminating(Population<E, R> result);
 }

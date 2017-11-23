@@ -1,19 +1,29 @@
-/**
- *  This file is part of Papareto.
- *	
- *  Papareto is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Papareto is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
- */
+/* (C) Copyright 2009-2013 CNRS (Centre National de la Recherche Scientifique).
+
+Licensed to the CNRS under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The CNRS licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+*/
+
+/* Contributors:
+
+Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
+
+*/
 
 package cnrs.i3s.papareto.gui;
 
@@ -37,166 +47,175 @@ import oscilloscup.data.Point;
 import oscilloscup.data.rendering.figure.ConnectedLineFigureRenderer;
 import oscilloscup.system.Space.MODE;
 
-public class MonitorPanel extends JPanel
+public class MonitorPanel<A> extends JPanel implements PopulationListener<A, A>
 {
-    private final JLabel sizeLabel = new JLabel("Size");
-    private final JLabel bestFitnessLabel = new JLabel("Best fitness");
-    private final JLabel numberOfGenerationsLabel = new JLabel("Number of generations");
-    private final JLabel numberOfThreadsLabel = new JLabel("Number of threads");
-    private final SwingPlotter fitnessPlotter = new SwingPlotter();
-    private final Figure bestFitnessFigure = new Figure();
-    private final Figure worstFitnessFigure = new Figure();
+	private final JLabel sizeLabel = new JLabel("Size");
+	private final JLabel bestFitnessLabel = new JLabel("Best fitness");
+	private final JLabel numberOfGenerationsLabel = new JLabel("Number of generations");
+	private final JLabel numberOfThreadsLabel = new JLabel("Number of threads");
+	private final SwingPlotter fitnessPlotter = new SwingPlotter();
+	private final Figure bestFitnessFigure = new Figure();
+	private final Figure worstFitnessFigure = new Figure();
 
-    private final SwingPlotter operatorPlotter = new SwingPlotter();
-    private final SwingPlotter perfPlotter = new SwingPlotter();
+	private final SwingPlotter operatorPlotter = new SwingPlotter();
+	private final SwingPlotter perfPlotter = new SwingPlotter();
 
-    private final JTabbedPane tabbedPane = new JTabbedPane();
+	private final JTabbedPane tabbedPane = new JTabbedPane();
 
-    public MonitorPanel(Population p)
-    {
-	p.getPopulationListeners().add(new L());
-
-	setLayout(new BorderLayout());
-
-	JPanel labelPanel = new JPanel(new GridLayout(3, 2));
-	labelPanel.add(sizeLabel);
-	labelPanel.add(bestFitnessLabel);
-	labelPanel.add(numberOfGenerationsLabel);
-	labelPanel.add(numberOfThreadsLabel);
-	add(labelPanel, BorderLayout.NORTH);
-
-	Figure f = new Figure();
-	f.addFigure(bestFitnessFigure);
-	f.addFigure(worstFitnessFigure);
-	ConnectedLineFigureRenderer br = new ConnectedLineFigureRenderer();
-	br.setColor(Color.blue);
-	ConnectedLineFigureRenderer wr = new ConnectedLineFigureRenderer();
-	wr.setColor(Color.red);
-	bestFitnessFigure.addRenderer(br);
-	worstFitnessFigure.addRenderer(wr);
-	fitnessPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
-	fitnessPlotter.getGraphics2DPlotter().setFigure(f);
-	fitnessPlotter.getGraphics2DPlotter().getSpace().getLegend().setText("Fitness'");
-	fitnessPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend().setText("Number of generations");
-	fitnessPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend().setText("Fitness value");
-	fitnessPlotter.getGraphics2DPlotter().getSpace().getXDimension().setMinimumIsAutomatic(false);
-	tabbedPane.addTab("Fitness", fitnessPlotter);
-
-	operatorPlotter.getGraphics2DPlotter().setFigure(new Figure());
-	operatorPlotter.getGraphics2DPlotter().getSpace().getLegend().setText("Operator success rate");
-	operatorPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend().setText("Number of generations");
-	operatorPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend().setText("Operators success rate");
-	operatorPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
-	tabbedPane.addTab("Operators", operatorPlotter);
-
-	perfPlotter.getGraphics2DPlotter().setFigure(new Figure());
-	ConnectedLineFigureRenderer r = new ConnectedLineFigureRenderer();
-	perfPlotter.getGraphics2DPlotter().getFigure().addRenderer(r);
-	perfPlotter.getGraphics2DPlotter().getSpace().getLegend().setText("Number of generations per second");
-	perfPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend().setText("Number of generations");
-	perfPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend()
-		.setText("Number of generations per second");
-	perfPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
-	tabbedPane.addTab("Profiling", perfPlotter);
-
-	add(tabbedPane, BorderLayout.CENTER);
-
-	setPreferredSize(new Dimension(800, 600));
-    }
-
-    private class L<A> implements PopulationListener<A>
-    {
-	private final Map<Operator, Figure> operator_figure = new HashMap();
-	private long lastIteration = -1;
-
-	@Override
-	public void newIteration(Population<A> p, boolean improveSolution)
+	public MonitorPanel()
 	{
-	    sizeLabel.setText("size=" + p.getSize());
-	    numberOfGenerationsLabel.setText("number of generations=" + p.getNumberOfGenerations());
-	    bestFitnessLabel.setText("best distance=" + p.getIndividualAt(0).fitness);
-	    updateFitnessPlotter(p);
-	    updateOperatorsPlotter(p);
-	    updatePerfPlotter(p);
-	}
 
-	private void updatePerfPlotter(Population<A> p)
-	{
-	    if (lastIteration != -1)
-	    {
-		long duration = System.currentTimeMillis() - lastIteration;
-		perfPlotter.getGraphics2DPlotter().getFigure()
-			.addPoint(new Point(p.getNumberOfGenerations(), duration));
-	    }
+		setLayout(new BorderLayout());
 
-	    lastIteration = System.currentTimeMillis();
-	    perfPlotter.repaint();
-	}
+		JPanel labelPanel = new JPanel(new GridLayout(3, 2));
+		labelPanel.add(sizeLabel);
+		labelPanel.add(bestFitnessLabel);
+		labelPanel.add(numberOfGenerationsLabel);
+		labelPanel.add(numberOfThreadsLabel);
+		add(labelPanel, BorderLayout.NORTH);
 
-	Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow, Color.cyan, Color.magenta,
-		Color.LIGHT_GRAY, Color.white };
+		Figure f = new Figure();
+		f.addFigure(bestFitnessFigure);
+		f.addFigure(worstFitnessFigure);
+		ConnectedLineFigureRenderer br = new ConnectedLineFigureRenderer();
+		br.setColor(Color.blue);
+		ConnectedLineFigureRenderer wr = new ConnectedLineFigureRenderer();
+		wr.setColor(Color.red);
+		bestFitnessFigure.addRenderer(br);
+		worstFitnessFigure.addRenderer(wr);
+		fitnessPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
+		fitnessPlotter.getGraphics2DPlotter().setFigure(f);
+		fitnessPlotter.getGraphics2DPlotter().getSpace().getLegend().setText("Fitness'");
+		fitnessPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend()
+				.setText("Number of generations");
+		fitnessPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend()
+				.setText("Fitness value");
+		fitnessPlotter.getGraphics2DPlotter().getSpace().getXDimension()
+				.setMinimumIsAutomatic(false);
+		tabbedPane.addTab("Fitness", fitnessPlotter);
 
-	private void updateOperatorsPlotter(Population<A> p)
-	{
-	    for (Operator o : p.getCrossoverOperators())
-	    {
-		updateOperatorFigure(o, p);
-	    }
+		operatorPlotter.getGraphics2DPlotter().setFigure(new Figure());
+		operatorPlotter.getGraphics2DPlotter().getSpace().getLegend()
+				.setText("Operator success rate");
+		operatorPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend()
+				.setText("Number of generations");
+		operatorPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend()
+				.setText("Operators success rate");
+		operatorPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
+		tabbedPane.addTab("Operators", operatorPlotter);
 
-	    for (Operator o : p.getMutationOperators())
-	    {
-		updateOperatorFigure(o, p);
-	    }
-
-	    operatorPlotter.repaint();
-	}
-
-	private void updateOperatorFigure(Operator o, Population<A> p)
-	{
-	    Figure operatorFigure = operator_figure.get(o);
-
-	    if (operatorFigure == null)
-	    {
-		operator_figure.put(o, operatorFigure = new Figure());
-		// operatorFigure.setName(o.getClass().getName());
-		operatorFigure.setName(o.getFriendlyName());
-
+		perfPlotter.getGraphics2DPlotter().setFigure(new Figure());
 		ConnectedLineFigureRenderer r = new ConnectedLineFigureRenderer();
-		r.setColor(colors[operator_figure.size()]);
-		operatorFigure.addRenderer(r);
-		operatorPlotter.getGraphics2DPlotter().getFigure().addFigure(operatorFigure);
-	    }
+		perfPlotter.getGraphics2DPlotter().getFigure().addRenderer(r);
+		perfPlotter.getGraphics2DPlotter().getSpace().getLegend()
+				.setText("Number of generations per second");
+		perfPlotter.getGraphics2DPlotter().getSpace().getXDimension().getLegend()
+				.setText("Number of generations");
+		perfPlotter.getGraphics2DPlotter().getSpace().getYDimension().getLegend()
+				.setText("Number of generations per second");
+		perfPlotter.getGraphics2DPlotter().getSpace().setMode(MODE.PHYSICS);
+		tabbedPane.addTab("Profiling", perfPlotter);
 
-	    operatorFigure.addPoint(new Point(p.getNumberOfGenerations(), (int) 1000 * o.getSuccessRate()));
-	    operatorFigure.retainsOnlyLastPoints(100);
+		add(tabbedPane, BorderLayout.CENTER);
+
+		setPreferredSize(new Dimension(800, 600));
 	}
 
-	private void updateFitnessPlotter(Population<A> p)
+	private final Map<Operator, Figure> operator_figure = new HashMap();
+	private long lastIteration = - 1;
+
+	@Override
+	public void newIteration(Population<A, A> p, double improve)
 	{
-	    double bestDistance = p.getIndividualAt(0).fitness[0];
+		sizeLabel.setText("size=" + p.size());
+		numberOfGenerationsLabel
+				.setText("number of generations=" + p.getNumberOfGenerations());
+		bestFitnessLabel.setText("best distance=" + p.getIndividualAt(0).fitness);
+		updateFitnessPlotter(p);
+		updateOperatorsPlotter(p);
+		updatePerfPlotter(p);
+	}
 
-	    if (bestDistance != Double.MAX_VALUE)
-	    {
-		bestFitnessFigure.addPoint(new Point(p.getNumberOfGenerations(), bestDistance));
-		bestFitnessFigure.setName("best fitness=" + bestDistance);
-	    }
+	private void updatePerfPlotter(Population<A, A> p)
+	{
+		if (lastIteration != - 1)
+		{
+			long duration = System.currentTimeMillis() - lastIteration;
+			perfPlotter.getGraphics2DPlotter().getFigure()
+					.addPoint(new Point(p.getNumberOfGenerations(), duration));
+		}
 
-	    double worstDistance = p.getIndividualAt(p.getSize() - 1).fitness[0];
+		lastIteration = System.currentTimeMillis();
+		perfPlotter.repaint();
+	}
 
-	    if (worstDistance != Double.MAX_VALUE)
-	    {
-		worstFitnessFigure.addPoint(new Point(p.getNumberOfGenerations(), worstDistance));
-		worstFitnessFigure.setName("worst fitness=" + worstDistance);
-	    }
+	Color[] colors = new Color[] { Color.red, Color.green, Color.blue, Color.yellow,
+			Color.cyan, Color.magenta, Color.LIGHT_GRAY, Color.white };
 
-	    fitnessPlotter.repaint();
+	private void updateOperatorsPlotter(Population<A, A> p)
+	{
+		for (Operator o : p.getRepresentation().getRandomIndividualGenerators())
+			updateOperatorFigure(o, p);
+
+		for (Operator o : p.getRepresentation().getCrossoverOperators())
+			updateOperatorFigure(o, p);
+
+		for (Operator o : p.getRepresentation().getMutationOperators())
+			updateOperatorFigure(o, p);
+
+		operatorPlotter.repaint();
+	}
+
+	private void updateOperatorFigure(Operator o, Population<A, A> p)
+	{
+		Figure operatorFigure = operator_figure.get(o);
+
+		if (operatorFigure == null)
+		{
+			operator_figure.put(o, operatorFigure = new Figure());
+			// operatorFigure.setName(o.getClass().getName());
+			operatorFigure.setName(o.getFriendlyName());
+
+			ConnectedLineFigureRenderer r = new ConnectedLineFigureRenderer();
+			r.setColor(colors[operator_figure.size()]);
+			operatorFigure.addRenderer(r);
+			operatorPlotter.getGraphics2DPlotter().getFigure().addFigure(operatorFigure);
+		}
+
+		operatorFigure.addPoint(
+				new Point(p.getNumberOfGenerations(), (int) 1000 * o.getSuccessRate()));
+		operatorFigure.retainsOnlyLastPoints(100);
+	}
+
+	private void updateFitnessPlotter(Population<A, A> p)
+	{
+		double bestDistance = p.getIndividualAt(0).fitness.getCombinedFitnessValue();
+
+		if (bestDistance != Double.MAX_VALUE)
+		{
+			bestFitnessFigure
+					.addPoint(new Point(p.getNumberOfGenerations(), bestDistance));
+			bestFitnessFigure.setName("best fitness=" + bestDistance);
+		}
+
+		double worstDistance = p.getIndividualAt(p.size() - 1).fitness
+				.getCombinedFitnessValue();
+
+		if (worstDistance != Double.MAX_VALUE)
+		{
+			worstFitnessFigure
+					.addPoint(new Point(p.getNumberOfGenerations(), worstDistance));
+			worstFitnessFigure.setName("worst fitness=" + worstDistance);
+		}
+
+		fitnessPlotter.repaint();
 	}
 
 	@Override
-	public void completed(Population<A> p)
+	public void completed(Population<A, A> p)
 	{
-	    // TODO Auto-generated method stub
-	    
+		// TODO Auto-generated method stub
+
 	}
-    }
+
 }

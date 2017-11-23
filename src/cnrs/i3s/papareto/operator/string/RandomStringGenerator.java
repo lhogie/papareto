@@ -24,23 +24,24 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.operator.string;
 
-package cnrs.i3s.papareto;
+import java.util.Random;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.NewChildOperator;
+import cnrs.i3s.papareto.Population;
+import toools.text.TextUtilities;
 
-public class Operator implements Serializable
+public class RandomStringGenerator extends NewChildOperator<StringBuilder, StringBuilder>
 {
-	public int nbSuccess = 0, nbFailure = 0;
 
-	public  double getSuccessRate()
+	@Override
+	public StringBuilder createNewChild(Population<StringBuilder, StringBuilder> p,
+			Random r)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
-	}
-
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
+		return new StringBuilder(TextUtilities.pickRandomString(r, 0, 10));
 	}
 
 }

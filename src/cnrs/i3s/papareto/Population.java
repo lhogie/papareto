@@ -1,19 +1,29 @@
-/**
- *  This file is part of Papareto.
- *	
- *  Papareto is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Lesser General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  Papareto is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with Papareto.  If not, see <http://www.gnu.org/licenses/>. *
- */
+/* (C) Copyright 2009-2013 CNRS (Centre National de la Recherche Scientifique).
+
+Licensed to the CNRS under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The CNRS licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+*/
+
+/* Contributors:
+
+Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
+
+*/
 
 package cnrs.i3s.papareto;
 
@@ -25,55 +35,95 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import cnrs.i3s.papareto.algo.LucEvolver;
 import cnrs.i3s.papareto.gui.MonitorPanel;
+import toools.Clazz;
 import toools.StopWatch;
 import toools.StopWatch.UNIT;
-import toools.collections.Lists;
+import toools.collections.RoundRobinIterator;
 import toools.gui.Utilities;
 import toools.io.file.RegularFile;
-import toools.thread.MultiThreadProcessing;
 
-public class Population<E, R> implements Serializable
+public class Population<E, R> implements Serializable, Iterable<Individual<E>>
 {
-	private static class IndividualList<E> extends ArrayList<Individual<E>>
+	private static class RemoveRangeArrayList<T> extends ArrayList<T>
 	{
-		public void shrinkTo(int targetSize)
+		// augment the visibility to make it usable here
+		@Override
+		public void removeRange(int a, int b)
 		{
-			removeRange(targetSize, size());
+			super.removeRange(a, b);
 		}
 	}
 
-	private final IndividualList<E> individualList = new IndividualList<>();
+	// the sorted list (by combined fitness) of individuals in the population
+	private final RemoveRangeArrayList<Individual<E>> individualList = new RemoveRangeArrayList<>();
+
+	// the class of objects that is used to represent the elements in the
+	// population
 	private Representation<E, R> representation;
-	private final List<MutationOperator<R>> mutationOperators = new ArrayList<>();
-	private final List<CrossoverOperator<R>> crossoverOperators = new ArrayList<>();
+
 	private final List<Evaluator<E, R>> evaluators = new ArrayList<>();
+	private Combiner combination = new LinearCombination();
 
-	// parameters of the evolutionary algorithm
-	private double offSpringRatio = 1;
-	private boolean allowsDuplicates = true;
-	private Random random = new Random();
-	private boolean allowsAsynchronousUpdates = false;
-
-	private int nbBirths = 0;
-	private int numberOfRejectedDuplicates = 0;
+	private Evolver<E, R> evolver = new LucEvolver<>();
 
 	// an history of how the best fitness has evolved along the iterations
-	private final FitnessHistory fitnessHistory = new FitnessHistory();
+	private final FitnessMeasureHistory fitnessHistory = new FitnessMeasureHistory();
 
-	private final List<PopulationListener<E, R>> listeners = new ArrayList<>();
+	// private final List<PopulationListener<E, R>> listeners = new
+	// ArrayList<>();
+	private transient FitnessCache<E> fitnessCache = null;
 
-	public List<MutationOperator<R>> getMutationOperators()
+	public int size()
 	{
-		return mutationOperators;
+		return individualList.size();
 	}
 
-	public List<CrossoverOperator<R>> getCrossoverOperators()
+	public void shrinkTo(int targetSize)
 	{
-		return crossoverOperators;
+		individualList.removeRange(targetSize, individualList.size());
+	}
+
+	/*
+	 * TODO: use binary search algorithm for a log(n) insertion instead of n
+	 */
+	public synchronized int add(Individual<E> e)
+	{
+		if (e == null)
+			throw new NullPointerException();
+
+		int index = 0;
+
+		while (index < individualList.size()
+				&& e.fitness.getCombinedFitnessValue() < individualList.get(index).fitness
+						.getCombinedFitnessValue())
+		{
+			++index;
+		}
+
+		individualList.add(index, e);
+		return index;
+	}
+
+	public synchronized void removeIndividualAt(int i)
+	{
+		individualList.remove(i);
+	}
+
+	@Override
+	public Iterator<Individual<E>> iterator()
+	{
+		return individualList.iterator();
+	}
+
+	public Evolver<E, R> getEvolver()
+	{
+		return evolver;
 	}
 
 	public Representation<E, R> getRepresentation()
@@ -110,69 +160,20 @@ public class Population<E, R> implements Serializable
 		if (object == null)
 			throw new NullPointerException();
 
-		Fitness f = computeFitness(object);
+		FitnessMeasure f = computeFitness(object);
 		Individual<E> i = new Individual<E>(object, f, Collections.EMPTY_LIST);
-		insertIndividual(i);
+		add(i);
 		return i;
-	}
-
-	public int getSize()
-	{
-		return individualList.size();
 	}
 
 	public boolean isEmpty()
 	{
-		return individualList.isEmpty();
+		return individualList.size() == 0;
 	}
 
-	/*
-	 * TODO: use binary search algorithm for a log(n) insertion instead of n
-	 */
-	public int insertIndividual(Individual<E> e)
-	{
-		if (e == null)
-			throw new NullPointerException();
-
-		// if the fitness is worse than any other individual
-		if (isEmpty() || e.fitness.compareTo(getIndividualAt(getSize() - 1).fitness) < 0)
-		{
-			individualList.add(e);
-			return individualList.size() - 1;
-		}
-		else
-		{
-			int sz = getSize();
-
-			for (int i = 0; i < sz; ++i)
-			{
-				if (e.fitness.compareTo(getIndividualAt(i).fitness) >= 0)
-				{
-					individualList.add(i, e);
-					return i;
-				}
-			}
-
-			throw new IllegalStateException();
-		}
-	}
-
-	public FitnessHistory getFitnessHistory()
+	public FitnessMeasureHistory getFitnessHistory()
 	{
 		return fitnessHistory;
-	}
-
-	public double getOffspringRatio()
-	{
-		return offSpringRatio;
-	}
-
-	public void setOffspringRatio(double offspringRatio)
-	{
-		if (offspringRatio < 0)
-			throw new IllegalArgumentException("offspringSize must be >= 0");
-
-		this.offSpringRatio = offspringRatio;
 	}
 
 	public int getNumberOfGenerations()
@@ -180,134 +181,11 @@ public class Population<E, R> implements Serializable
 		return fitnessHistory.size();
 	}
 
-	public int getNumberOfBirths()
-	{
-		return nbBirths;
-	}
-
-	public int getNumberOfRejectedDuplicates()
-	{
-		return numberOfRejectedDuplicates;
-	}
-
-	public void expansion(final int targetSize)
-	{
-		if (targetSize < getSize())
-			throw new IllegalArgumentException("can't expand to a lower size");
-
-		final List<Individual<E>> children = new ArrayList<>();
-
-		new MultiThreadProcessing()
-		{
-
-			@Override
-			protected void runThread(int rank, List<Thread> threads) throws Throwable
-			{
-				while (getSize() + children.size() < targetSize)
-				{
-					Individual<E> child = createNewChild();
-
-					if (child != null)
-					{
-						if (allowsDuplicates || ( ! children.contains(child)
-								&& ! individualList.contains(child)))
-						{
-							synchronized (this)
-							{
-								if (allowsAsynchronousUpdates
-										&& participateToAsynchronousUpdating(child))
-								{
-									insertIndividual(child);
-								}
-								else
-								{
-									children.add(child);
-								}
-							}
-						}
-						else
-						{
-							++numberOfRejectedDuplicates;
-						}
-					}
-				}
-			}
-		};
-
-		// some children may not have been added asynchronously
-		for (Individual<E> c : children)
-		{
-			insertIndividual(c);
-		}
-	}
-
-	protected boolean participateToAsynchronousUpdating(Individual<E> i)
-	{
-		return true;
-	}
-
-	private Individual<E> createNewChild()
-	{
-		// randomly picks up 2 parents (may be the same one)
-		Individual<E> p1 = binaryTournament();
-		Individual<E> p2 = binaryTournament();
-
-		// crossover
-		CrossoverOperator<R> crossoverOperator = Lists.pickRandomElement(
-				getCrossoverOperators(),
-				Operator.getUsageProbabilities(getCrossoverOperators()), random);
-		R rp1 = representation.fromObject(p1.object);
-		R rp2 = representation.fromObject(p2.object);
-		R rchild = crossoverOperator.crossover(rp1, rp2, random);
-
-		if (rchild == null)
-		{
-			return null;
-		}
-		else
-		{
-			if (rchild == rp1 || rchild == rp2)
-				throw new IllegalStateException(
-						"a crossover operator is not allowed to return one of the two ancestors");
-
-			List<Operator> operators = new ArrayList<Operator>();
-			operators.add(crossoverOperator);
-
-			if ( ! mutationOperators.isEmpty())
-			{
-				operators.addAll(mutate(rchild));
-			}
-
-			++nbBirths;
-
-			E child = representation.toObject(rchild);
-			Fitness fitness = computeFitness(child);
-			return new Individual<E>(child, fitness, operators);
-		}
-	}
-
-	private Collection<? extends Operator> mutate(R child)
-	{
-		List<Operator> operators = new ArrayList<Operator>();
-
-		MutationOperator<R> mutationOperator = Lists.pickRandomElement(mutationOperators,
-				Operator.getUsageProbabilities(mutationOperators), random);
-
-		if (random.nextDouble() < mutationOperator.getProbability())
-		{
-			mutationOperator.mutate(child, random);
-			operators.add(mutationOperator);
-		}
-
-		return operators;
-	}
-
-	public static <E, R> long saveToDisk(Population<E, R> p, RegularFile outFile)
-			throws FileNotFoundException, IOException
+	public long saveToDisk(RegularFile outFile) throws FileNotFoundException, IOException
 	{
 		StopWatch sw = new StopWatch(UNIT.ms);
 		ObjectOutputStream oos = new ObjectOutputStream(outFile.createWritingStream());
-		oos.writeObject(p);
+		oos.writeObject(this);
 		oos.close();
 		return sw.getElapsedTime();
 	}
@@ -323,7 +201,7 @@ public class Population<E, R> implements Serializable
 
 	public void checkpoint(RegularFile file) throws FileNotFoundException, IOException
 	{
-		saveToDisk(this, file);
+		saveToDisk(file);
 	}
 
 	public static <E, R> Population<E, R> restore(RegularFile file)
@@ -332,153 +210,124 @@ public class Population<E, R> implements Serializable
 		return loadFromDisk(file);
 	}
 
-	public List<E> getBestIndividuals()
+	public List<Individual<E>> getBestIndividuals()
 	{
-		List<E> l = new ArrayList<>();
-		double bestFitness = individualList.get(0).fitness.combine();
+		List<Individual<E>> r = new ArrayList<>();
+		double bestFitness = individualList.get(0).fitness.getCombinedFitnessValue();
 
 		for (int i = 0;; ++i)
 		{
 			Individual<E> e = individualList.get(i);
 
-			if (e.fitness.combine() == bestFitness)
+			if (e.fitness.getCombinedFitnessValue() == bestFitness)
 			{
-				l.add(e.object);
+				r.add(e);
 			}
 			else
 			{
-				return l;
+				return r;
 			}
 		}
-	}
-
-	private Individual<E> binaryTournament()
-	{
-		Individual<E> i1 = getIndividualAt(random.nextInt(getSize()));
-		Individual<E> i2 = getIndividualAt(random.nextInt(getSize()));
-		return i1.fitness.compareTo(i2.fitness) > 0 ? i1 : i2;
-	}
-
-	public void selection(int targetSize)
-	{
-		for (Individual<E> i : individualList.subList(targetSize, getSize()))
-		{
-			for (Operator o : i.operators)
-			{
-				o.nbFailure++;
-			}
-		}
-
-		individualList.shrinkTo(targetSize);
-
-		for (Individual<E> i : individualList)
-		{
-			for (Operator o : i.operators)
-			{
-				o.nbSuccess++;
-			}
-		}
-	}
-
-	public double makeNewGeneration()
-	{
-		// make a new generation with the same size
-		return makeNewGeneration(getSize());
-	}
-
-	public double makeNewGeneration(int targetSize)
-	{
-		Individual<E> initialBest = getBestIndividual();
-		int sizeExpanded = (int) Math.max(getSize() + 1,
-				targetSize * (1 + offSpringRatio));
-		expansion(sizeExpanded);
-		selection(targetSize);
-		Individual<E> best = getBestIndividual();
-		fitnessHistory.add(best.fitness);
-		double improvement = best.fitness.combine() - initialBest.fitness.combine();
-
-		for (PopulationListener<E, R> l : listeners)
-		{
-			l.newIteration(this, improvement);
-		}
-
-		return improvement;
-	}
-
-	public List<PopulationListener<E, R>> getPopulationListeners()
-	{
-		return listeners;
 	}
 
 	public void monitor()
 	{
-		MonitorPanel p = new MonitorPanel(this);
+		MonitorPanel p = new MonitorPanel();
 		Utilities.displayInJFrame(p, "Papareto population monitor");
 	}
 
-	public void evolve(TerminationCondition<E, R> c)
+	public double iterate(Random prng)
+	{
+		Individual<E> initialBest = getBestIndividual();
+		evolver.iterate(this, prng);
+		Individual<E> best = getBestIndividual();
+		getFitnessHistory().add(best.fitness);
+		double improvement = best.fitness.getCombinedFitnessValue()
+				- initialBest.fitness.getCombinedFitnessValue();
+		return improvement;
+	}
+
+	public void evolve(Random prng, TerminationCondition<E, R> c)
 	{
 		while ( ! c.completed(this))
 		{
-			makeNewGeneration();
+			evolver.iterate(this, prng);
 		}
+	}
 
-		for (PopulationListener<E, R> l : listeners)
+	public void evolveInTheBackground(Random prng, TerminationCondition<E, R> c,
+			PopulationListener<E, R> listener)
+	{
+		new Thread(new Runnable()
 		{
-			l.completed(this);
-		}
+
+			@Override
+			public void run()
+			{
+				while ( ! c.completed(Population.this))
+				{
+					double improvement = iterate(prng);
+
+					if (listener != null)
+						listener.newIteration(Population.this, improvement);
+				}
+			}
+
+		}).start();
 	}
 
 	@Override
 	public String toString()
 	{
 		return "NbGeneration=" + getNumberOfGenerations() + ", nbIndividuals="
-				+ individualList.size() + ", best fitness="
-				+ getBestIndividual().getFitness();
+				+ individualList.size() + (size() > 0
+						? ", best fitness=" + getBestIndividual().getFitness() : "");
 	}
 
-	public boolean isAllowDuplicates()
+	public String toStringFull()
 	{
-		return allowsDuplicates;
+		return individualList.toString();
 	}
 
-	public void setAllowDuplicates(boolean allowDuplicates)
+	public FitnessMeasure computeFitness(E e)
 	{
-		this.allowsDuplicates = allowDuplicates;
-	}
+		if (fitnessCache != null)
+		{
+			FitnessMeasure m = fitnessCache.get(e);
 
-	public boolean isAllowsAsynchronousUpdates()
-	{
-		return allowsAsynchronousUpdates;
-	}
+			if (m != null)
+			{
+				return m;
+			}
+		}
 
-	public void setAllowsAsynchronousUpdates(boolean allowsAsynchronousUpdates)
-	{
-		this.allowsAsynchronousUpdates = allowsAsynchronousUpdates;
-	}
-
-	public Fitness computeFitness(E e)
-	{
 		if (evaluators.isEmpty())
 			throw new IllegalStateException(
 					"fitness cannot be computed if no evaluator have been defined");
 
 		int nbEvaluators = evaluators.size();
-		Fitness values = new Fitness(nbEvaluators);
+		double[] values = new double[nbEvaluators];
 
 		for (int i = 0; i < nbEvaluators; ++i)
 		{
-			values.elements[i] = evaluators.get(i).evaluate(e, this);
+			values[i] = evaluators.get(i).evaluate(e, this);
 		}
 
-		return values;
+		FitnessMeasure f = new FitnessMeasure(values, combination);
+
+		if (fitnessCache != null)
+		{
+			fitnessCache.add(e, f);
+		}
+
+		return f;
 	}
 
 	public void merge(Population<E, R> p)
 	{
 		for (Individual<E> e : p.individualList)
 		{
-			insertIndividual(e);
+			individualList.add(e);
 		}
 
 		for (Evaluator<E, R> e : p.evaluators)
@@ -489,22 +338,7 @@ public class Population<E, R> implements Serializable
 			}
 		}
 
-		for (MutationOperator<R> o : p.mutationOperators)
-		{
-			if ( ! mutationOperators.contains(o))
-			{
-				mutationOperators.add(o);
-			}
-		}
-
-		for (CrossoverOperator<R> o : p.crossoverOperators)
-		{
-			if ( ! crossoverOperators.contains(o))
-			{
-				crossoverOperators.add(o);
-			}
-		}
-
+		evolver = p.evolver;
 		representation = p.representation;
 	}
 
@@ -521,4 +355,103 @@ public class Population<E, R> implements Serializable
 		return r;
 	}
 
+	public Population<E, R> clone()
+	{
+		Population<E, R> c = Clazz.makeInstance(getClass());
+		c.representation = representation;
+		c.evolver = evolver;
+		c.evaluators.addAll(evaluators);
+		c.combination = combination;
+		return c;
+	}
+
+	public List<Population<E, R>> split(int nbSubPopulations)
+	{
+		List<Population<E, R>> r = new ArrayList<>();
+
+		// create nbSubPopulations empty subpopulations
+		for (int i = 0; i < nbSubPopulations; ++i)
+		{
+			r.add(clone());
+		}
+
+		int pi = 0;
+
+		for (Individual<E> i : individualList)
+		{
+			r.get(pi).individualList.add(i);
+
+			// cycle to the next subpopulation
+			pi = (pi + 1) % r.size();
+		}
+
+		return r;
+	}
+
+	public void setEvolver(Evolver<E, R> evolver)
+	{
+		this.evolver = evolver;
+	}
+
+	public int indexOf(Individual<E> individual)
+	{
+		int index = Collections.binarySearch(individualList, individual);
+		return index < 0 ? - 1 : index;
+	}
+
+	public void ensureCapacity(int n)
+	{
+		individualList.ensureCapacity(n);
+	}
+
+	protected Individual<E> tournament(int n, Random r)
+	{
+		Individual<E> i1 = pickRandomIndividual(r);
+
+		while (--n > 0)
+		{
+			Individual<E> i2 = pickRandomIndividual(r);
+
+			// if i2 has higher fitness
+			if (i1.fitness.compareTo(i2.fitness) < 0)
+			{
+				i1 = i2;
+			}
+		}
+
+		return i1;
+	}
+
+	public Individual<E> binaryTournament(Random r)
+	{
+		return tournament(2, r);
+	}
+
+	public Individual<E> pickRandomIndividual(Random r)
+	{
+		return getIndividualAt(r.nextInt(size()));
+	}
+
+	public void clear()
+	{
+		individualList.clear();
+	}
+
+	public void set(List<E> children)
+	{
+		clear();
+
+		for (E e : children)
+		{
+			add(e);
+		}
+	}
+
+	public void fillRandomly(int targetSize, Random r)
+	{
+		while (size() < targetSize)
+		{
+			add(getRepresentation().toObject(getRepresentation().getRandomIndividualGenerators().get(0).createNewChild(this, r)));
+		}
+	}
 }

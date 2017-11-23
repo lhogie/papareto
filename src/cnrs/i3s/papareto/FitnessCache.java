@@ -24,23 +24,55 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
-
+ 
+ 
 package cnrs.i3s.papareto;
 
-import java.io.Serializable;
+import java.io.IOException;
 
-public class Operator implements Serializable
+import toools.io.file.Directory;
+import toools.io.file.RegularFile;
+import toools.io.serialization.JavaSerializer;
+
+public class FitnessCache<E>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	private final Directory directory;
 
-	public  double getSuccessRate()
+	public FitnessCache(Directory directory)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.directory = directory;
 	}
 
-	public  String getFriendlyName()
+	public void add(E r, FitnessMeasure m)
 	{
-		return getClass().getName();
+		RegularFile f = getFileFor(r);
+		f.getParent().mkdirs();
+
+		try
+		{
+			f.setContent(JavaSerializer.getDefaultSerializer().toBytes(m));
+		}
+		catch (IOException e)
+		{
+			throw new CacheException(e);
+		}
 	}
 
+	public FitnessMeasure get(E r)
+	{
+		try
+		{
+			return (FitnessMeasure) JavaSerializer.getDefaultSerializer()
+					.fromBytes(getFileFor(r).getContent());
+		}
+		catch (IOException e)
+		{
+			throw new CacheException(e);
+		}
+	}
+
+	public RegularFile getFileFor(E r)
+	{
+		return new RegularFile("" + r.hashCode());
+	}
 }

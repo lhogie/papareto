@@ -25,22 +25,29 @@ Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis)
 
 */
 
-package cnrs.i3s.papareto;
+package cnrs.i3s.papareto.algo;
 
-import java.io.Serializable;
+import java.util.Random;
 
-public class Operator implements Serializable
+import cnrs.i3s.papareto.Evolver;
+import cnrs.i3s.papareto.NewChildOperator;
+import cnrs.i3s.papareto.Population;
+
+public class RandomEvolver<E, R> extends Evolver<E, R>
 {
-	public int nbSuccess = 0, nbFailure = 0;
-
-	public  double getSuccessRate()
+	@Override
+	public void iterate(Population<E, R> p, Random random)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
-	}
+		final int popSize = p.size();
 
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
-	}
+		for (int i = 0; i < popSize; ++i)
+		{
+			NewChildOperator<E, R> g = getRandomGenerator(p, random);
+			R r = g.createNewChild(p, random);
+			E child = p.getRepresentation().toObject(r);
+			p.add(child);
+		}
 
+		p.shrinkTo(popSize);
+	}
 }

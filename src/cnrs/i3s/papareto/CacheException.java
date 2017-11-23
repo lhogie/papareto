@@ -24,23 +24,16 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
-
+ 
+ 
 package cnrs.i3s.papareto;
 
-import java.io.Serializable;
+import java.io.IOException;
 
-public class Operator implements Serializable
+public class CacheException extends RuntimeException
 {
-	public int nbSuccess = 0, nbFailure = 0;
-
-	public  double getSuccessRate()
+	public CacheException(IOException e)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		super(e);
 	}
-
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
-	}
-
 }

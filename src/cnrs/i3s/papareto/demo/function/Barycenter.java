@@ -24,23 +24,35 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.demo.function;
 
-package cnrs.i3s.papareto;
+import java.util.Random;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.NewChildOperator;
+import cnrs.i3s.papareto.Population;
 
-public class Operator implements Serializable
+public class Barycenter extends NewChildOperator<Point, Point>
 {
-	public int nbSuccess = 0, nbFailure = 0;
 
-	public  double getSuccessRate()
+	@Override
+	public Point createNewChild(Population<Point, Point> p, Random prng)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
-	}
+		Point p1 = p.binaryTournament(prng).object;
+		Point p2 = p.binaryTournament(prng).object;
 
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
+		if (p1.v.length != p2.v.length)
+			throw new IllegalStateException();
+
+		Point r = new Point(p1.v.length);
+
+		for (int i = 0; i < r.v.length; ++i)
+		{
+			r.v[i] = (p1.v[i] + p2.v[i]) / 2;
+		}
+
+		return r;
 	}
 
 }

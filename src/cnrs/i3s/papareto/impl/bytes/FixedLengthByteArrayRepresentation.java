@@ -24,23 +24,32 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.impl.bytes;
 
-package cnrs.i3s.papareto;
+import cnrs.i3s.papareto.Representation;
 
-import java.io.Serializable;
-
-public class Operator implements Serializable
+public abstract class FixedLengthByteArrayRepresentation<E>
+		extends Representation<E, byte[]>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	public final byte[] alphabet;
+	private final int chromosomeLength;
 
-	public  double getSuccessRate()
+	public FixedLengthByteArrayRepresentation(int chromosomeLength, byte[] alphabet)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.alphabet = alphabet;
+		this.chromosomeLength = chromosomeLength;
+		getCrossoverOperators().add(new RandomByteArrayGenerator<>(this));
 	}
 
-	public  String getFriendlyName()
+	public int getChromosomeLength()
 	{
-		return getClass().getName();
+		return chromosomeLength;
 	}
 
+	public byte[] getAlphabet()
+	{
+		return alphabet;
+	}
 }

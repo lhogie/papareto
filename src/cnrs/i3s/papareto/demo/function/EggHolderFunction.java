@@ -24,23 +24,20 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.demo.function;
 
-package cnrs.i3s.papareto;
+import cnrs.i3s.papareto.Evaluator;
+import cnrs.i3s.papareto.Population;
 
-import java.io.Serializable;
-
-public class Operator implements Serializable
+public class EggHolderFunction extends Evaluator<Point, Point>
 {
-	public int nbSuccess = 0, nbFailure = 0;
-
-	public  double getSuccessRate()
+	@Override
+	public double evaluate(Point p, Population<Point, Point> pp)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		// return - (i.v[0] * i.v[0]);
+		return - (p.v[1] + 47) * Math.sin(Math.sqrt(Math.abs(p.v[0] / 2 + p.v[1] + 47)))
+				- p.v[0] * Math.sin(Math.sqrt(Math.abs(p.v[0] - (p.v[1] + 47))));
 	}
-
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
-	}
-
 }

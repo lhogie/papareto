@@ -24,23 +24,34 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.impl.bytes;
 
-package cnrs.i3s.papareto;
+import java.util.Random;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.NewChildOperator;
+import cnrs.i3s.papareto.Population;
 
-public class Operator implements Serializable
+public class RandomByteArrayGenerator<E> extends NewChildOperator<E, byte[]>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	private final FixedLengthByteArrayRepresentation<E> r;
 
-	public  double getSuccessRate()
+	public RandomByteArrayGenerator(FixedLengthByteArrayRepresentation<E> r)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.r = r;
 	}
 
-	public  String getFriendlyName()
+	@Override
+	public byte[] createNewChild(Population<E, byte[]> p, Random random)
 	{
-		return getClass().getName();
-	}
+		byte[] a = new byte[r.getChromosomeLength()];
 
+		for (int i = 0; i < a.length; ++i)
+		{
+			a[i] = r.getAlphabet()[random.nextInt(r.getAlphabet().length)];
+		}
+
+		return a;
+	}
 }

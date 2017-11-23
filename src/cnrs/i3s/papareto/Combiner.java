@@ -24,23 +24,13 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
-
+ 
+ 
 package cnrs.i3s.papareto;
 
 import java.io.Serializable;
 
-public class Operator implements Serializable
+public interface Combiner extends Serializable
 {
-	public int nbSuccess = 0, nbFailure = 0;
-
-	public  double getSuccessRate()
-	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
-	}
-
-	public  String getFriendlyName()
-	{
-		return getClass().getName();
-	}
-
+	double combine(double[] values);
 }

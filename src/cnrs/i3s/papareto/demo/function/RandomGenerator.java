@@ -24,23 +24,35 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.demo.function;
 
-package cnrs.i3s.papareto;
+import java.util.Random;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.NewChildOperator;
+import cnrs.i3s.papareto.Population;
 
-public class Operator implements Serializable
+public class RandomGenerator extends NewChildOperator<Point, Point>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	final int dimension;
 
-	public  double getSuccessRate()
+	public RandomGenerator(int dimension)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.dimension = dimension;
 	}
 
-	public  String getFriendlyName()
+	@Override
+	public Point createNewChild(Population<Point, Point> pp, Random r)
 	{
-		return getClass().getName();
-	}
+		Point p = new Point(dimension);
 
+		for (int i = 0; i < dimension; ++i)
+		{
+			p.v[i] = r.nextDouble() * 10000;
+
+		}
+
+		return p;
+	}
 }

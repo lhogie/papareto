@@ -24,23 +24,34 @@ under the License.
 Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
 
 */
+ 
+ 
+package cnrs.i3s.papareto.demo.function;
 
-package cnrs.i3s.papareto;
+import java.util.Random;
 
-import java.io.Serializable;
+import cnrs.i3s.papareto.MutationOperator;
 
-public class Operator implements Serializable
+public class PointMutation extends MutationOperator<Point>
 {
-	public int nbSuccess = 0, nbFailure = 0;
+	double proba = 0.5;
+	final double multiplier;
 
-	public  double getSuccessRate()
+	public PointMutation(double multiplier)
 	{
-		return nbSuccess / (double) (nbSuccess + nbFailure);
+		this.multiplier = multiplier;
 	}
 
-	public  String getFriendlyName()
+	@Override
+	public void mutate(Point p, Random prng)
 	{
-		return getClass().getName();
+		for (int i = 0; i < p.v.length; ++i)
+		{
+			if (prng.nextDouble() < proba)
+			{
+				double shift = prng.nextDouble() * multiplier;
+				p.v[i] += prng.nextBoolean() ? shift : - shift;
+			}
+		}
 	}
-
 }

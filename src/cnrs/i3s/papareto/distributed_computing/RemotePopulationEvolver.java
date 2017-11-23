@@ -1,20 +1,72 @@
+/* (C) Copyright 2009-2013 CNRS (Centre National de la Recherche Scientifique).
+
+Licensed to the CNRS under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The CNRS licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+*/
+
+/* Contributors:
+
+Luc Hogie (CNRS, I3S laboratory, University of Nice-Sophia Antipolis) 
+
+*/
+ 
+ 
 package cnrs.i3s.papareto.distributed_computing;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import cnrs.i3s.papareto.Individual;
 import cnrs.i3s.papareto.Population;
+import cnrs.i3s.papareto.TerminationCondition;
 import octojus.ComputationRequest;
 
-public abstract class RemotePopulationEvolver<E, R> extends ComputationRequest<Population<E, R>>
+public class RemotePopulationEvolver<E, R> extends ComputationRequest<List<Individual<E>>>
 {
 	Population<E, R> population;
-	
+	TerminationCondition<E, R> terminationCondition;
+	Random prng;
+
 	@Override
-	protected Population<E, R> compute() throws Throwable
+	protected List<Individual<E>> compute() throws Throwable
 	{
-		evolve(population);
-		
-		return population;
+		while ( ! terminationCondition.completed(population))
+		{
+			population.iterate(prng);
+			sendFeedbackToclient(population.getNumberOfGenerations());
+		}
+
+		// retrieves back the result
+		int sz = population.size();
+		List<Individual<E>> r = new ArrayList<>(sz);
+
+		for (int i = 0; i < sz; ++i)
+		{
+			r.add(population.getIndividualAt(i));
+		}
+
+		return r;
 	}
 
-	protected abstract void evolve(Population<E, R> population);
-
+	@Override
+	protected void feedbackReceived(Object o)
+	{
+	//	System.out.println("new individual " + o);
+	}
 }
