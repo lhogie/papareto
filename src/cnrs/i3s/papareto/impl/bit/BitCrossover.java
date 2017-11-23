@@ -17,11 +17,12 @@
 
 package cnrs.i3s.papareto.impl.bytes;
 
+import java.util.BitSet;
 import java.util.Random;
 
 import cnrs.i3s.papareto.CrossoverOperator;
 
-public class BitCrossover extends CrossoverOperator<byte[]>
+public class ByteCrossover extends CrossoverOperator<BitSet>
 {
 
 	@Override
@@ -31,16 +32,16 @@ public class BitCrossover extends CrossoverOperator<byte[]>
 	}
 
 	@Override
-	public byte[] crossover(byte[] i1, byte[] i2, Random r)
+	public BitSet crossover(BitSet i1, BitSet i2, Random r)
 	{
-		byte[] b = new byte[i1.length];
-		int splitIndex = r.nextInt(Math.min(i1.length, i2.length));
+		BitSet b = new BitSet();
+		int splitIndex = r.nextInt(Math.min(i1.length(), i2.length()));
 
 		// copy the begining of i1
 		System.arraycopy(i1, 0, b, 0, splitIndex);
 
 		// copy the end of i2
-		System.arraycopy(i2, splitIndex, b, splitIndex, i2.length - splitIndex);
+		System.arraycopy(i2, splitIndex, b, splitIndex, i2.length() - splitIndex);
 
 		return b;
 	}
