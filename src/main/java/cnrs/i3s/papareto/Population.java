@@ -40,10 +40,8 @@ import java.util.List;
 import java.util.Random;
 
 import cnrs.i3s.papareto.algo.LucEvolver;
-import cnrs.i3s.papareto.gui.MonitorPanel;
 import toools.StopWatch;
 import toools.StopWatch.UNIT;
-import toools.gui.Utilities;
 import toools.io.file.RegularFile;
 import toools.reflect.Clazz;
 
@@ -93,8 +91,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		int index = 0;
 
 		while (index < individualList.size()
-				&& e.fitness.getCombinedFitnessValue() < individualList.get(index).fitness
-						.getCombinedFitnessValue()) {
+				&& e.fitness.getCombinedFitnessValue() < individualList.get(index).fitness.getCombinedFitnessValue()) {
 			++index;
 		}
 
@@ -161,8 +158,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		return fitnessHistory.size();
 	}
 
-	public long saveToDisk(RegularFile outFile)
-			throws FileNotFoundException, IOException {
+	public long saveToDisk(RegularFile outFile) throws FileNotFoundException, IOException {
 		StopWatch sw = new StopWatch(UNIT.ms);
 		ObjectOutputStream oos = new ObjectOutputStream(outFile.createWritingStream());
 		oos.writeObject(this);
@@ -182,8 +178,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		saveToDisk(file);
 	}
 
-	public static <E, R> Population<E, R> restore(RegularFile file)
-			throws ClassNotFoundException, IOException {
+	public static <E, R> Population<E, R> restore(RegularFile file) throws ClassNotFoundException, IOException {
 		return loadFromDisk(file);
 	}
 
@@ -196,16 +191,10 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 
 			if (e.fitness.getCombinedFitnessValue() == bestFitness) {
 				r.add(e);
-			}
-			else {
+			} else {
 				return r;
 			}
 		}
-	}
-
-	public void monitor() {
-		MonitorPanel p = new MonitorPanel();
-		Utilities.displayInJFrame(p, "Papareto population monitor");
 	}
 
 	public double iterate(Random prng) {
@@ -213,24 +202,22 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		evolver.iterate(this, prng);
 		Individual<E> best = getBestIndividual();
 		getFitnessHistory().add(best.fitness);
-		double improvement = best.fitness.getCombinedFitnessValue()
-				- initialBest.fitness.getCombinedFitnessValue();
+		double improvement = best.fitness.getCombinedFitnessValue() - initialBest.fitness.getCombinedFitnessValue();
 		return improvement;
 	}
 
 	public void evolve(Random prng, TerminationCondition<E, R> c) {
-		while ( ! c.completed(this)) {
+		while (!c.completed(this)) {
 			evolver.iterate(this, prng);
 		}
 	}
 
-	public void evolveInTheBackground(Random prng, TerminationCondition<E, R> c,
-			PopulationListener<E, R> listener) {
+	public void evolveInTheBackground(Random prng, TerminationCondition<E, R> c, PopulationListener<E, R> listener) {
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
-				while ( ! c.completed(Population.this)) {
+				while (!c.completed(Population.this)) {
 					double improvement = iterate(prng);
 
 					if (listener != null)
@@ -243,10 +230,8 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 
 	@Override
 	public String toString() {
-		return "NbGeneration=" + getNumberOfGenerations() + ", nbIndividuals="
-				+ individualList.size()
-				+ (size() > 0 ? ", best fitness=" + getBestIndividual().getFitness()
-						: "");
+		return "NbGeneration=" + getNumberOfGenerations() + ", nbIndividuals=" + individualList.size()
+				+ (size() > 0 ? ", best fitness=" + getBestIndividual().getFitness() : "");
 	}
 
 	public String toStringFull() {
@@ -263,8 +248,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		}
 
 		if (evaluators.isEmpty())
-			throw new IllegalStateException(
-					"fitness cannot be computed if no evaluator have been defined");
+			throw new IllegalStateException("fitness cannot be computed if no evaluator have been defined");
 
 		int nbEvaluators = evaluators.size();
 		double[] values = new double[nbEvaluators];
@@ -288,7 +272,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		}
 
 		for (Evaluator<E, R> e : p.evaluators) {
-			if ( ! evaluators.contains(e)) {
+			if (!evaluators.contains(e)) {
 				evaluators.add(e);
 			}
 		}
@@ -297,8 +281,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 		representation = p.representation;
 	}
 
-	public static <E extends Serializable, R> Population<E, R> merge(
-			Collection<Population<E, R>> populations) {
+	public static <E extends Serializable, R> Population<E, R> merge(Collection<Population<E, R>> populations) {
 		Population<E, R> r = new Population<E, R>();
 
 		for (Population<E, R> p : populations) {
@@ -343,7 +326,7 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 
 	public int indexOf(Individual<E> individual) {
 		int index = Collections.binarySearch(individualList, individual);
-		return index < 0 ? - 1 : index;
+		return index < 0 ? -1 : index;
 	}
 
 	public void ensureCapacity(int n) {
@@ -387,8 +370,8 @@ public class Population<E, R> implements Serializable, Iterable<Individual<E>> {
 
 	public void fillRandomly(int targetSize, Random r) {
 		while (size() < targetSize) {
-			add(getRepresentation().toObject(getRepresentation()
-					.getRandomIndividualGenerators().get(0).createNewChild(this, r)));
+			add(getRepresentation()
+					.toObject(getRepresentation().getRandomIndividualGenerators().get(0).createNewChild(this, r)));
 		}
 	}
 }
